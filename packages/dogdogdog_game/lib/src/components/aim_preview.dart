@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 
 import '../models/dog_definition.dart';
+import '../rendering/dog_placeholder_paint.dart';
 
 /// Non-physics ghost showing where the next drop will land horizontally.
 class AimPreview extends PositionComponent {
@@ -23,13 +24,12 @@ class AimPreview extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
-    final radius = _definition.radius;
-    final fill = Paint()..color = _definition.color.withValues(alpha: 0.55);
-    final ring = Paint()
-      ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.7)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.06;
-    canvas.drawCircle(Offset(radius, radius), radius, fill);
-    canvas.drawCircle(Offset(radius, radius), radius, ring);
+    paintDogPlaceholder(
+      canvas,
+      _definition,
+      diameter: size.x,
+      fillAlpha: 0.55,
+      showRing: true,
+    );
   }
 }

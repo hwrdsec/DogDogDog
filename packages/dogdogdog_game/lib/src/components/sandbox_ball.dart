@@ -4,6 +4,7 @@ import 'package:flame_forge2d/flame_forge2d.dart';
 
 import '../config/physics_config.dart';
 import '../models/dog_definition.dart';
+import '../rendering/dog_placeholder_paint.dart';
 
 /// Circular dog body with a merge [level] from [DogDefinition].
 class SandboxBall extends BodyComponent with ContactCallbacks {
@@ -16,6 +17,7 @@ class SandboxBall extends BodyComponent with ContactCallbacks {
   }) : _spawnPosition = position.clone(),
        _physics = physics,
        super(
+         renderBody: false,
          paint: Paint()..color = definition.color,
          bodyDef: BodyDef(
            type: BodyType.dynamic,
@@ -94,5 +96,14 @@ class SandboxBall extends BodyComponent with ContactCallbacks {
       );
     }
     onMergeContact(this, other, contactPoint);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final diameter = radius * 2;
+    canvas.save();
+    canvas.translate(-radius, -radius);
+    paintDogPlaceholder(canvas, definition, diameter: diameter);
+    canvas.restore();
   }
 }

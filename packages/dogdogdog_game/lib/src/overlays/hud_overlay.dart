@@ -105,10 +105,15 @@ class _NextDogBadge extends StatelessWidget {
         Container(
           width: 36,
           height: 36,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: definition.color,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white54, width: 2),
+          ),
+          child: Text(
+            definition.emoji,
+            style: const TextStyle(fontSize: 18, height: 1),
           ),
         ),
         const SizedBox(height: 2),

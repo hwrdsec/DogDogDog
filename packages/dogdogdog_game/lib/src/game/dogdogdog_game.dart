@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flame/camera.dart';
 import 'package:flame/events.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
@@ -21,7 +22,7 @@ import '../persistence/local_high_score_repository.dart';
 
 /// Core DogDogDog Flame / Forge2D game.
 ///
-/// Milestone 4: aim-and-drop loop, spawn pool, HUD overlays, pause, game over.
+/// Aim-and-drop loop, spawn pool, HUD overlays, pause, game over, fixed playfield.
 class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
   DogDogDogGame({
     GameConfig? config,
@@ -420,9 +421,18 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
     if (canvasSize.x <= 0 || canvasSize.y <= 0) {
       return;
     }
-    final width = config.physics.worldWidth;
-    final height = width * (canvasSize.y / canvasSize.x);
-    camera.viewfinder.visibleGameSize = Vector2(width, height);
+    final physics = config.physics;
+    final playSize = Vector2(physics.worldWidth, physics.visibleWorldHeight);
+
+    // Letterbox to a fixed portrait playfield so wide desktop windows do not
+    // stretch the arena horizontally and collapse vertical challenge.
+    if (camera.viewport is! FixedAspectRatioViewport) {
+      camera.viewport = FixedAspectRatioViewport(
+        aspectRatio: physics.playAspectRatio,
+      );
+    }
+
+    camera.viewfinder.visibleGameSize = playSize;
     camera.viewfinder.position = Vector2.zero();
   }
 

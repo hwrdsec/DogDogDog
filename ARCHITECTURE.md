@@ -22,8 +22,8 @@ import 'package:dogdogdog_game/dogdogdog_game.dart';
 Exported surface:
 
 - `DogDogDogGame` — Forge2D game with walls, aim-and-drop, merges, pause, game over
-- `GameConfig` / `PhysicsConfig` — centralized defaults (spawn pool, danger line, cooldown)
-- `DogDefinition` + `placeholderDogs` / `dogAtLevel` — merge catalog
+- `GameConfig` / `PhysicsConfig` — centralized defaults (playfield aspect, spawn pool, danger, cooldown)
+- `DogDefinition` + `placeholderDogs` / `dogAtLevel` — merge catalog (emoji / sprite paths)
 - `MergeRules` / `MergePair` / `MergeOutcome` — pure merge + scoring policy
 - `SpawnPool` — seedable drop-level picker for lower tiers only
 - `DangerMonitor` — grace-period tracking for the lose line
@@ -40,11 +40,19 @@ Hosts construct the game with optional callbacks:
 
 Pass `seed` or `random` for reproducible spawn sequences.
 
-## Fixed world width
+## Fixed playfield aspect
 
-The playable Forge2D world uses a **fixed width** in world units (`PhysicsConfig.worldWidth`). The camera / viewport scales to fit the device, but simulation space does not stretch horizontally with screen size. That keeps drop aiming, merge radii, and difficulty consistent across phones and tablets.
+The playable Forge2D world is a **fixed portrait box** in world units:
 
-Vertical visible height may vary by aspect ratio; gameplay systems should treat width as the stable axis.
+- `PhysicsConfig.worldWidth` — horizontal extent (stable aiming / merge radii)
+- `PhysicsConfig.visibleWorldHeight` — vertical extent (stacking / danger challenge)
+- `PhysicsConfig.playAspectRatio` — `worldWidth / visibleWorldHeight`
+
+The camera uses a `FixedAspectRatioViewport` sized to that ratio and sets
+`visibleGameSize` to `(worldWidth, visibleWorldHeight)`. On wide windows
+(macOS desktop) the playfield is letterboxed rather than stretched full width,
+so difficulty stays Suika-like across phones, tablets, and desktop. Knobs live
+only in `PhysicsConfig` / `GameConfig`.
 
 ## HUD via Flutter overlays
 
@@ -93,6 +101,15 @@ Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `M
 - Danger line + `DangerMonitor` grace period ends the run; the active falling drop is ignored until first contact so it cannot false-trigger while falling through the line.
 - Pause / resume, restart, score + local high score via package overlays and `LocalHighScoreRepository`.
 
+## Milestone 5 dog content
+
+Eleven data-driven `DogDefinition` tiers in `placeholderDogs` (emoji, color,
+score, radius, optional `spriteAsset`). Spawn pool stays on lower tiers
+(`minDropLevel`…`maxDropLevel`); higher dogs come from merges only. Package
+folder `assets/dogs/` holds replaceable sprites (`dog_01.png`…`dog_11.png`);
+until files exist, balls / HUD render color + emoji + level number.
+
 ## What later milestones still skip
 
-No art pipeline or Tracker App integration yet. Configs, callbacks, and persistence remain ready for those systems.
+No real art pipeline or Tracker App integration yet. Configs, callbacks,
+sprite paths, and persistence remain ready for those systems.

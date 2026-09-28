@@ -3,6 +3,7 @@ class PhysicsConfig {
   const PhysicsConfig({
     this.gravityY = 40.0,
     this.worldWidth = 10.0,
+    this.visibleWorldHeight = 16.0,
     this.timeStep = 1 / 60,
     this.velocityIterations = 8,
     this.positionIterations = 3,
@@ -22,6 +23,16 @@ class PhysicsConfig {
 
   /// Fixed horizontal extent of the playable world (world units).
   final double worldWidth;
+
+  /// Fixed vertical extent of the playable world (world units).
+  ///
+  /// Paired with [worldWidth] this defines a portrait playfield. The camera
+  /// letterboxes (pillarboxes) on wider windows so gameplay proportions stay
+  /// the same across phones, tablets, and desktop.
+  final double visibleWorldHeight;
+
+  /// Width / height of the playfield (`worldWidth / visibleWorldHeight`).
+  double get playAspectRatio => worldWidth / visibleWorldHeight;
 
   /// Simulation step size in seconds.
   final double timeStep;

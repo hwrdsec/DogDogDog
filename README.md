@@ -40,6 +40,8 @@ That resolves the workspace (host + game package) with a single lockfile at the 
 
 High score is stored locally via `shared_preferences`.
 
+The play area is a fixed portrait box (letterboxed on wide desktop windows) so challenge stays consistent across sizes. See `ARCHITECTURE.md`.
+
 ## Run the host
 
 ```bash
