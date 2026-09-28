@@ -21,7 +21,7 @@ import 'package:dogdogdog_game/dogdogdog_game.dart';
 
 Exported surface (Milestone 1):
 
-- `DogDogDogGame` — Forge2D game with an empty dark play area
+- `DogDogDogGame` — Forge2D game with walls, gravity, and tap-to-drop sandbox circles
 - `GameConfig` / `PhysicsConfig` — centralized defaults
 - `DogDefinition` + `placeholderDogs` — stub merge catalog
 - `HighScoreRepository` / `LocalHighScoreRepository` — persistence boundary
@@ -74,6 +74,10 @@ The game package owns the interface and the local implementation. It does not as
 
 The standalone `apps/dogdogdog` app remains the day-to-day development host and a shippable store build target.
 
-## What Milestone 1 deliberately skips
+## Milestone 2 physics sandbox
 
-No merge rules, spawning, input, walls, lose line, or art pipeline yet. Configs, callbacks, and persistence stubs are in place so those systems can land without reshaping the package boundary.
+The game package owns walls (left, right, floor), tap/click drop for placeholder circles, and all material values via `PhysicsConfig`. The host stays a thin `GameWidget` shell. No merge rules, score loop, lose line, or dog theme in this milestone.
+
+## What later milestones still skip
+
+No merge rules, lose line, full dog catalog, or art pipeline yet. Configs, callbacks, and persistence stubs remain ready for those systems.

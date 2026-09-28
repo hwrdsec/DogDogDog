@@ -1,6 +1,8 @@
 /// Reusable Flame game package for DogDogDog.
 library;
 
+export 'src/components/sandbox_ball.dart';
+export 'src/components/wall.dart';
 export 'src/config/game_config.dart';
 export 'src/config/physics_config.dart';
 export 'src/game/dogdogdog_game.dart';
