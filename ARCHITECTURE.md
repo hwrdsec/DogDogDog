@@ -19,11 +19,13 @@ Import the game package from a single barrel:
 import 'package:dogdogdog_game/dogdogdog_game.dart';
 ```
 
-Exported surface (Milestone 1):
+Exported surface:
 
-- `DogDogDogGame` — Forge2D game with walls, gravity, and tap-to-drop sandbox circles
+- `DogDogDogGame` — Forge2D game with walls, gravity, tap-to-drop, and merges
 - `GameConfig` / `PhysicsConfig` — centralized defaults
-- `DogDefinition` + `placeholderDogs` — stub merge catalog
+- `DogDefinition` + `placeholderDogs` / `dogAtLevel` — merge catalog
+- `MergeRules` / `MergePair` / `MergeOutcome` — pure merge + scoring policy
+- `SandboxBall` / `Wall` — physics bodies
 - `HighScoreRepository` / `LocalHighScoreRepository` — persistence boundary
 
 Hosts construct the game with optional callbacks:
@@ -53,7 +55,7 @@ GameWidget(
 )
 ```
 
-Milestone 1 leaves `overlayBuilderMap` empty but ready. Later milestones add named overlays and call `game.overlays.add` / `remove` from game code when state changes.
+Milestone 3 updates score through `onScoreChanged` (the host may show a tiny debug label). Named overlays for a full HUD arrive in Milestone 4.
 
 ## Persistence
 
@@ -76,8 +78,12 @@ The standalone `apps/dogdogdog` app remains the day-to-day development host and 
 
 ## Milestone 2 physics sandbox
 
-The game package owns walls (left, right, floor), tap/click drop for placeholder circles, and all material values via `PhysicsConfig`. The host stays a thin `GameWidget` shell. No merge rules, score loop, lose line, or dog theme in this milestone.
+The game package owns walls (left, right, floor), tap/click drop for placeholder circles, and all material values via `PhysicsConfig`.
+
+## Milestone 3 merge mechanic
+
+Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `MergeRules.resolve` picks a conflict-free set (each body at most once) and the game removes both dogs, spawns the next level at the contact point, and awards that dog’s `scoreValue` via `onScoreChanged`. Max level cannot merge. New dogs can immediately chain-merge on later physics steps. Tap-to-drop still works and drops `GameConfig.startingLevel` dogs.
 
 ## What later milestones still skip
 
-No merge rules, lose line, full dog catalog, or art pipeline yet. Configs, callbacks, and persistence stubs remain ready for those systems.
+No lose line, full HUD / game-over / pause / preview loop, or art pipeline yet. Configs, callbacks, and persistence stubs remain ready for those systems.

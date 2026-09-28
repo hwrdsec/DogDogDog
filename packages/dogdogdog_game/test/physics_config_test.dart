@@ -26,11 +26,16 @@ void main() {
   });
 
   group('DogDefinition', () {
-    test('placeholder catalog starts at level 1', () {
+    test('placeholder catalog starts at level 1 and reaches maxDogLevel', () {
       expect(placeholderDogs, isNotEmpty);
       expect(placeholderDogs.first.level, 1);
       expect(placeholderDogs.first.name, 'Puppy');
       expect(placeholderDogs.first.radius, greaterThan(0));
+      expect(maxCatalogLevel(), GameConfig.defaults.maxDogLevel);
+      expect(
+        placeholderDogs.map((d) => d.level).toSet().length,
+        placeholderDogs.length,
+      );
     });
   });
 

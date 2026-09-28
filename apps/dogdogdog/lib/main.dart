@@ -37,12 +37,18 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late final DogDogDogGame _game;
+  int _score = 0;
 
   @override
   void initState() {
     super.initState();
     _game = DogDogDogGame(
-      onScoreChanged: (_) {},
+      onScoreChanged: (score) {
+        if (!mounted) {
+          return;
+        }
+        setState(() => _score = score);
+      },
       onGameStarted: () {},
       onGameOver: (_) {},
       onHighScoreChanged: (_) {},
@@ -53,11 +59,32 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: GameWidget<DogDogDogGame>(
-          game: _game,
-          // HUD overlays (score, next dog, game over) land here later.
-          overlayBuilderMap:
-              const <String, OverlayWidgetBuilder<DogDogDogGame>>{},
+        child: Stack(
+          children: [
+            GameWidget<DogDogDogGame>(
+              game: _game,
+              // HUD overlays (score, next dog, game over) land here later.
+              overlayBuilderMap:
+                  const <String, OverlayWidgetBuilder<DogDogDogGame>>{},
+            ),
+            // Temporary debug score until Milestone 4 HUD.
+            Positioned(
+              top: 12,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Text(
+                  'Score: $_score',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -38,7 +38,7 @@ flutter run -d macos
 # or: flutter run -d <ios-simulator|android-device>
 ```
 
-Tap or click the play area to drop placeholder circles. Walls, gravity, bounce, and stacking live in `packages/dogdogdog_game`.
+Tap or click the play area to drop level-1 dogs. Matching levels merge into the next tier and add to the score (debug label at the top). Walls, gravity, bounce, stacking, and merges live in `packages/dogdogdog_game`.
 
 ## Tests
 

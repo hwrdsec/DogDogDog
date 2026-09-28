@@ -8,29 +8,40 @@ import 'package:flutter/foundation.dart';
 import '../components/sandbox_ball.dart';
 import '../components/wall.dart';
 import '../config/game_config.dart';
+import '../logic/merge_rules.dart';
+import '../models/dog_definition.dart';
 import '../persistence/high_score_repository.dart';
 import '../persistence/local_high_score_repository.dart';
 
 /// Core DogDogDog Flame / Forge2D game.
 ///
-/// Milestone 2: bounded play area with gravity, walls, and tap-to-drop
-/// placeholder circles. Merge gameplay arrives later.
+/// Milestone 3: leveled dogs, same-level merges with chain reactions, scoring.
 class DogDogDogGame extends Forge2DGame with TapCallbacks {
   DogDogDogGame({
     GameConfig? config,
     HighScoreRepository? highScoreRepository,
+    List<DogDefinition>? dogCatalog,
     this.onScoreChanged,
     this.onGameStarted,
     this.onGameOver,
     this.onHighScoreChanged,
   }) : config = config ?? GameConfig.defaults,
        highScoreRepository = highScoreRepository ?? LocalHighScoreRepository(),
+       dogCatalog = List.unmodifiable(dogCatalog ?? placeholderDogs),
        super(
          gravity: Vector2(0, (config ?? GameConfig.defaults).physics.gravityY),
-       );
+       ) {
+    mergeRules = MergeRules(
+      maxLevel: this.config.maxDogLevel,
+      catalog: this.dogCatalog,
+    );
+  }
 
   final GameConfig config;
   final HighScoreRepository highScoreRepository;
+  final List<DogDefinition> dogCatalog;
+
+  late final MergeRules mergeRules;
 
   final ValueChanged<int>? onScoreChanged;
   final VoidCallback? onGameStarted;
@@ -42,19 +53,8 @@ class DogDogDogGame extends Forge2DGame with TapCallbacks {
   bool isRunning = false;
 
   final List<Wall> _walls = [];
+  final List<MergePair> _pendingMerges = [];
   double _lastDropTime = -1000;
-  int _spawnCount = 0;
-
-  static const List<Color> _ballColors = [
-    Color(0xFFFFC107),
-    Color(0xFFFF9800),
-    Color(0xFFFF5722),
-    Color(0xFFE91E63),
-    Color(0xFF9C27B0),
-    Color(0xFF3F51B5),
-    Color(0xFF03A9F4),
-    Color(0xFF4CAF50),
-  ];
 
   @override
   Color backgroundColor() => const Color(0xFF1A1A2E);
@@ -79,44 +79,47 @@ class DogDogDogGame extends Forge2DGame with TapCallbacks {
   }
 
   @override
+  void update(double dt) {
+    super.update(dt);
+    _processMerges();
+  }
+
+  @override
   void onTapDown(TapDownEvent event) {
     final worldPoint = screenToWorld(event.canvasPosition);
     tryDropBall(worldPoint.x);
   }
 
-  /// Drops a sandbox circle at [worldX] near the top of the play area.
+  /// Drops a leveled dog at [worldX] near the top of the play area.
   ///
-  /// Returns `true` when a ball was spawned. Honors [GameConfig.dropCooldownSeconds].
-  bool tryDropBall(double worldX) {
+  /// Defaults to [GameConfig.startingLevel]. Returns `true` when spawned.
+  bool tryDropBall(double worldX, {int? level}) {
     final now = currentTime();
     if (now - _lastDropTime < config.dropCooldownSeconds) {
       return false;
     }
 
+    final dropLevel = level ?? config.startingLevel;
+    final definition = mergeRules.definitionFor(dropLevel);
+    if (definition == null) {
+      return false;
+    }
+
     final physics = config.physics;
     final halfWidth = physics.worldWidth / 2;
-    final radius = physics.ballRadius;
+    final radius = definition.radius;
     final maxX = halfWidth - radius;
     final clampedX = worldX.clamp(-maxX, maxX);
 
     final top = camera.visibleWorldRect.top;
     final spawnY = top + physics.spawnTopOffset + radius;
 
-    final color = _ballColors[_spawnCount % _ballColors.length];
-    world.add(
-      SandboxBall(
-        position: Vector2(clampedX, spawnY),
-        color: color,
-        physics: physics,
-      ),
-    );
-
-    _spawnCount++;
+    _spawnDog(definition, Vector2(clampedX, spawnY));
     _lastDropTime = now;
     return true;
   }
 
-  /// Starts a session. Sandbox drops work without this; hosts can still wire UI.
+  /// Starts a session. Drops and merges work without this; hosts can still wire UI.
   void startGame() {
     score = 0;
     isRunning = true;
@@ -142,6 +145,91 @@ class DogDogDogGame extends Forge2DGame with TapCallbacks {
   void setScore(int value) {
     score = value;
     onScoreChanged?.call(score);
+  }
+
+  void _onMergeContact(
+    SandboxBall self,
+    SandboxBall other,
+    Vector2 contactPoint,
+  ) {
+    if (self.isMerging || other.isMerging) {
+      return;
+    }
+    if (!mergeRules.canMerge(self.level, other.level)) {
+      return;
+    }
+    _pendingMerges.add(
+      MergePair(
+        idA: identityHashCode(self),
+        idB: identityHashCode(other),
+        level: self.level,
+        contactX: contactPoint.x,
+        contactY: contactPoint.y,
+      ),
+    );
+  }
+
+  void _processMerges() {
+    if (_pendingMerges.isEmpty) {
+      return;
+    }
+    final candidates = List<MergePair>.of(_pendingMerges);
+    _pendingMerges.clear();
+
+    final outcomes = mergeRules.resolve(candidates);
+    if (outcomes.isEmpty) {
+      return;
+    }
+
+    final ballsById = <int, SandboxBall>{};
+    for (final child in world.children) {
+      if (child is SandboxBall && !child.isMerging) {
+        ballsById[identityHashCode(child)] = child;
+      }
+    }
+
+    var scoreDelta = 0;
+    for (final outcome in outcomes) {
+      final a = ballsById[outcome.idA];
+      final b = ballsById[outcome.idB];
+      if (a == null || b == null) {
+        continue;
+      }
+      if (a.isMerging || b.isMerging) {
+        continue;
+      }
+      if (!mergeRules.canMerge(a.level, b.level)) {
+        continue;
+      }
+
+      final next = mergeRules.definitionFor(outcome.resultingLevel);
+      if (next == null) {
+        continue;
+      }
+
+      a.isMerging = true;
+      b.isMerging = true;
+      a.removeFromParent();
+      b.removeFromParent();
+
+      _spawnDog(next, Vector2(outcome.spawnX, outcome.spawnY));
+      scoreDelta += outcome.scoreAwarded;
+    }
+
+    if (scoreDelta > 0) {
+      setScore(score + scoreDelta);
+    }
+  }
+
+  void _spawnDog(DogDefinition definition, Vector2 position) {
+    world.add(
+      SandboxBall(
+        position: position,
+        definition: definition,
+        physics: config.physics,
+        onMergeContact: _onMergeContact,
+      ),
+    );
   }
 
   void _fitCamera(Vector2 canvasSize) {
