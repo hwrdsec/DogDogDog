@@ -1,17 +1,66 @@
-# dog_dog_dog
+# DogDogDog
 
-A new Flutter project.
+Casual merge game built with Flutter and Flame. Drop dogs, merge matching ones, chase a high score.
 
-## Getting Started
+This repository is a Dart pub workspace: a thin Flutter host app plus a reusable game package so the same game can run standalone or inside another Flutter app later.
 
-This project is a starting point for a Flutter application.
+## Structure
 
-A few resources to get you started if this is your first Flutter project:
+```
+DogDogDog/
+  apps/dogdogdog/           # Standalone Flutter host (Android, iOS, macOS)
+  packages/dogdogdog_game/  # Flame / Forge2D game package
+  ARCHITECTURE.md           # Design notes
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Requirements
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter 3.47+ (Dart 3.13+)
+- Xcode for iOS / macOS builds
+- Android SDK for Android builds
+
+## Setup
+
+From the repository root:
+
+```bash
+export PATH="/Users/hwrd/Documents/Development/SDKs/flutter/bin:$PATH"
+flutter pub get
+```
+
+That resolves the workspace (host + game package) with a single lockfile at the root.
+
+## Run the host
+
+```bash
+cd apps/dogdogdog
+flutter run -d macos
+# or: flutter run -d <ios-simulator|android-device>
+```
+
+## Tests
+
+Game package unit tests:
+
+```bash
+cd packages/dogdogdog_game
+flutter test
+```
+
+Host widget smoke test:
+
+```bash
+cd apps/dogdogdog
+flutter test
+```
+
+## Analyze
+
+```bash
+cd packages/dogdogdog_game && flutter analyze
+cd ../../apps/dogdogdog && flutter analyze
+```
+
+## Platforms
+
+Supported host targets: **Android**, **iOS**, and **macOS**. Web is intentionally not included.
