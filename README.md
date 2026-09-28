@@ -30,6 +30,16 @@ flutter pub get
 
 That resolves the workspace (host + game package) with a single lockfile at the root.
 
+## How to play
+
+1. Drag horizontally to aim the ghost dog at the top, then release to drop.
+2. Matching levels merge into the next tier and add to your score.
+3. Only lower levels appear as drops; higher dogs come from merges.
+4. Keep the pile below the red danger line — linger too long and it is game over.
+5. Use pause / resume in the HUD, or Restart after a game over.
+
+High score is stored locally via `shared_preferences`.
+
 ## Run the host
 
 ```bash
@@ -37,8 +47,6 @@ cd apps/dogdogdog
 flutter run -d macos
 # or: flutter run -d <ios-simulator|android-device>
 ```
-
-Tap or click the play area to drop level-1 dogs. Matching levels merge into the next tier and add to the score (debug label at the top). Walls, gravity, bounce, stacking, and merges live in `packages/dogdogdog_game`.
 
 ## Tests
 

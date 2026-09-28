@@ -21,11 +21,14 @@ import 'package:dogdogdog_game/dogdogdog_game.dart';
 
 Exported surface:
 
-- `DogDogDogGame` — Forge2D game with walls, gravity, tap-to-drop, and merges
-- `GameConfig` / `PhysicsConfig` — centralized defaults
+- `DogDogDogGame` — Forge2D game with walls, aim-and-drop, merges, pause, game over
+- `GameConfig` / `PhysicsConfig` — centralized defaults (spawn pool, danger line, cooldown)
 - `DogDefinition` + `placeholderDogs` / `dogAtLevel` — merge catalog
 - `MergeRules` / `MergePair` / `MergeOutcome` — pure merge + scoring policy
-- `SandboxBall` / `Wall` — physics bodies
+- `SpawnPool` — seedable drop-level picker for lower tiers only
+- `DangerMonitor` — grace-period tracking for the lose line
+- `SandboxBall` / `Wall` / `AimPreview` / `DangerLine` — world components
+- `DogDogDogOverlays` / `HudOverlay` / `GameOverOverlay` — Flutter HUD
 - `HighScoreRepository` / `LocalHighScoreRepository` — persistence boundary
 
 Hosts construct the game with optional callbacks:
@@ -34,6 +37,8 @@ Hosts construct the game with optional callbacks:
 - `onGameStarted`
 - `onGameOver`
 - `onHighScoreChanged`
+
+Pass `seed` or `random` for reproducible spawn sequences.
 
 ## Fixed world width
 
@@ -48,14 +53,11 @@ Score, next-dog preview, pause, and game-over UI live in **Flutter widgets**, no
 ```dart
 GameWidget(
   game: game,
-  overlayBuilderMap: {
-    // 'hud': ...,
-    // 'gameOver': ...,
-  },
+  overlayBuilderMap: DogDogDogOverlays.builders(),
 )
 ```
 
-Milestone 3 updates score through `onScoreChanged` (the host may show a tiny debug label). Named overlays for a full HUD arrive in Milestone 4.
+The game package owns the overlay widgets and names (`hud`, `gameOver`). Parents can replace builders if they need a custom shell.
 
 ## Persistence
 
@@ -82,8 +84,15 @@ The game package owns walls (left, right, floor), tap/click drop for placeholder
 
 ## Milestone 3 merge mechanic
 
-Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `MergeRules.resolve` picks a conflict-free set (each body at most once) and the game removes both dogs, spawns the next level at the contact point, and awards that dog’s `scoreValue` via `onScoreChanged`. Max level cannot merge. New dogs can immediately chain-merge on later physics steps. Tap-to-drop still works and drops `GameConfig.startingLevel` dogs.
+Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `MergeRules.resolve` picks a conflict-free set (each body at most once) and the game removes both dogs, spawns the next level at the contact point, and awards that dog’s `scoreValue` via `onScoreChanged`. Max level cannot merge. New dogs can immediately chain-merge on later physics steps.
+
+## Milestone 4 gameplay loop
+
+- Drag horizontally to aim a ghost preview, release to drop (spawn cooldown enforced).
+- Spawn pool (`GameConfig.minDropLevel`…`maxDropLevel`) feeds the drop queue; HUD shows the next dog.
+- Danger line + `DangerMonitor` grace period ends the run; the active falling drop is ignored until first contact so it cannot false-trigger while falling through the line.
+- Pause / resume, restart, score + local high score via package overlays and `LocalHighScoreRepository`.
 
 ## What later milestones still skip
 
-No lose line, full HUD / game-over / pause / preview loop, or art pipeline yet. Configs, callbacks, and persistence stubs remain ready for those systems.
+No art pipeline or Tracker App integration yet. Configs, callbacks, and persistence remain ready for those systems.

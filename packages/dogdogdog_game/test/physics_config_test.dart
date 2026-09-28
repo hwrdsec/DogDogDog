@@ -40,13 +40,17 @@ void main() {
   });
 
   group('GameConfig', () {
-    test('defaults wrap physics defaults and drop cooldown', () {
+    test('defaults wrap physics, spawn pool, cooldown, and danger', () {
       const config = GameConfig.defaults;
 
       expect(config.physics.worldWidth, PhysicsConfig.defaults.worldWidth);
       expect(config.startingLevel, 1);
       expect(config.maxDogLevel, greaterThanOrEqualTo(config.startingLevel));
+      expect(config.minDropLevel, 1);
+      expect(config.maxDropLevel, lessThan(config.maxDogLevel));
       expect(config.dropCooldownSeconds, greaterThan(0));
+      expect(config.dangerLineOffset, greaterThan(0));
+      expect(config.dangerGraceSeconds, greaterThan(0));
     });
   });
 }

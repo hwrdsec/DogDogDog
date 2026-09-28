@@ -12,6 +12,7 @@ class SandboxBall extends BodyComponent with ContactCallbacks {
     required this.definition,
     required this.onMergeContact,
     PhysicsConfig physics = PhysicsConfig.defaults,
+    this.isDropping = false,
   }) : _spawnPosition = position.clone(),
        _physics = physics,
        super(
@@ -46,6 +47,9 @@ class SandboxBall extends BodyComponent with ContactCallbacks {
   /// True once this body is claimed by a merge (queued or applied).
   bool isMerging = false;
 
+  /// Player drop that has not contacted anything yet — skipped by danger checks.
+  bool isDropping;
+
   /// World-space spawn position used when this ball was created.
   Vector2 get spawnPosition => _spawnPosition;
 
@@ -55,6 +59,11 @@ class SandboxBall extends BodyComponent with ContactCallbacks {
 
   PhysicsConfig get physics => _physics;
 
+  /// True when any part of the circle sits above [dangerLineY] (smaller Y).
+  bool isAboveDangerLine(double dangerLineY) {
+    return position.y - radius < dangerLineY;
+  }
+
   @override
   Body createBody() {
     bodyDef!.userData = this;
@@ -63,6 +72,9 @@ class SandboxBall extends BodyComponent with ContactCallbacks {
 
   @override
   void beginContact(Object other, Contact contact) {
+    if (isDropping) {
+      isDropping = false;
+    }
     if (isMerging || other is! SandboxBall || other.isMerging) {
       return;
     }
