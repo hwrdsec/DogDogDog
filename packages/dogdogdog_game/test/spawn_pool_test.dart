@@ -35,5 +35,24 @@ void main() {
       final pool = SpawnPool(minLevel: 3, maxLevel: 3, seed: 1);
       expect(List.generate(10, (_) => pool.next()), everyElement(3));
     });
+
+    test('default game pool only drops levels 1 through 3', () {
+      const config = GameConfig.defaults;
+      expect(config.minDropLevel, 1);
+      expect(config.maxDropLevel, 3);
+
+      final pool = SpawnPool(
+        minLevel: config.minDropLevel,
+        maxLevel: config.maxDropLevel,
+        seed: 42,
+      );
+      final seen = <int>{};
+      for (var i = 0; i < 200; i++) {
+        final level = pool.next();
+        expect(level, inInclusiveRange(1, 3));
+        seen.add(level);
+      }
+      expect(seen, {1, 2, 3});
+    });
   });
 }

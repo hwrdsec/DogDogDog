@@ -39,36 +39,60 @@ class MergeOutcome {
 
   final int idA;
   final int idB;
-  final int resultingLevel;
+
+  /// Dog level to spawn. Null when the pair is a max-level clear.
+  final int? resultingLevel;
+
   final double spawnX;
   final double spawnY;
   final int scoreAwarded;
+
+  /// True when both dogs are removed and nothing is spawned.
+  bool get clearsPair => resultingLevel == null;
 }
 
 /// Pure, testable merge policy for DogDogDog.
 ///
-/// Same level + room to grow → remove both, spawn [level + 1] at the contact
-/// point, award that dog's [DogDefinition.scoreValue]. Each body participates
-/// in at most one merge per resolve pass.
+/// Same level below [maxLevel] → remove both, spawn [level + 1] at the
+/// contact point, award that dog's [DogDefinition.scoreValue]. Two dogs at
+/// [maxLevel] clear (both removed, nothing spawned) and award
+/// [scoreForMaxLevelClear]. Each body participates in at most one merge per
+/// resolve pass.
 class MergeRules {
-  const MergeRules({required this.maxLevel, this.catalog = placeholderDogs});
+  const MergeRules({
+    required this.maxLevel,
+    this.catalog = placeholderDogs,
+    this.maxLevelClearScore,
+  });
 
-  /// Highest level that may exist; that level cannot merge further.
+  /// Highest level that may exist.
+  ///
+  /// Merging two dogs at this level clears them instead of spawning a
+  /// higher tier.
   final int maxLevel;
 
   /// Dog catalog used for next-level lookup and scoring.
   final List<DogDefinition> catalog;
 
+  /// Override for [scoreForMaxLevelClear]. Null uses the default formula.
+  final int? maxLevelClearScore;
+
   /// Definition for [level], or `null` when the catalog has no entry.
   DogDefinition? definitionFor(int level) => dogAtLevel(level, catalog);
 
   /// Whether two dogs at [levelA] / [levelB] are allowed to merge.
+  ///
+  /// Matching levels below [maxLevel] merge when the next dog exists. Two
+  /// dogs already at [maxLevel] merge as a clear.
   bool canMerge(int levelA, int levelB) {
     if (levelA != levelB) {
       return false;
     }
-    if (levelA >= maxLevel) {
+    if (definitionFor(levelA) == null || levelA > maxLevel) {
       return false;
+    }
+    if (levelA == maxLevel) {
+      return true;
     }
     return definitionFor(levelA + 1) != null;
   }
@@ -78,9 +102,23 @@ class MergeRules {
     return definitionFor(resultingLevel)?.scoreValue ?? 0;
   }
 
-  /// Next merge tier after [level], or `null` when blocked / missing.
+  /// Points awarded when two max-level dogs clear.
+  ///
+  /// Uses [maxLevelClearScore] when set. Otherwise continues the catalog
+  /// series (`scoreValue * 2 + 1` of the max dog), which is higher than a
+  /// normal merge into that dog.
+  int scoreForMaxLevelClear() {
+    final configured = maxLevelClearScore;
+    if (configured != null) {
+      return configured;
+    }
+    final base = definitionFor(maxLevel)?.scoreValue ?? 0;
+    return base * 2 + 1;
+  }
+
+  /// Next merge tier after [level], or `null` for a clear or a blocked merge.
   int? nextLevel(int level) {
-    if (!canMerge(level, level)) {
+    if (level >= maxLevel || !canMerge(level, level)) {
       return null;
     }
     return level + 1;
@@ -134,7 +172,15 @@ class MergeRules {
       if (used.contains(pair.idA) || used.contains(pair.idB)) {
         continue;
       }
-      final resulting = pair.level + 1;
+      final int? resulting;
+      final int score;
+      if (pair.level == maxLevel) {
+        resulting = null;
+        score = scoreForMaxLevelClear();
+      } else {
+        resulting = pair.level + 1;
+        score = scoreForResultingLevel(resulting);
+      }
       used
         ..add(pair.idA)
         ..add(pair.idB);
@@ -145,7 +191,7 @@ class MergeRules {
           resultingLevel: resulting,
           spawnX: pair.contactX,
           spawnY: pair.contactY,
-          scoreAwarded: scoreForResultingLevel(resulting),
+          scoreAwarded: score,
         ),
       );
     }

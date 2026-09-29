@@ -6,7 +6,9 @@ void main() {
   group('GameConfig spawn + danger defaults', () {
     test('spawn pool is a lower subset of merge levels', () {
       const config = GameConfig.defaults;
+      expect(config.maxDogLevel, 8);
       expect(config.minDropLevel, 1);
+      expect(config.maxDropLevel, 3);
       expect(config.maxDropLevel, lessThan(config.maxDogLevel));
       expect(config.maxDropLevel, greaterThanOrEqualTo(config.minDropLevel));
       expect(config.dangerLineOffset, greaterThan(0));
@@ -17,20 +19,20 @@ void main() {
 
   group('restart + queue semantics', () {
     test('startGame rolls a fresh queue from the spawn pool', () {
-      final pool = SpawnPool(minLevel: 1, maxLevel: 5, seed: 123);
+      final pool = SpawnPool(minLevel: 1, maxLevel: 3, seed: 123);
       final first = pool.next();
       final second = pool.next();
 
       // Reproduce the queue hand-off used by DogDogDogGame._advanceQueue.
       var current = first;
       var next = second;
-      expect(current, inInclusiveRange(1, 5));
-      expect(next, inInclusiveRange(1, 5));
+      expect(current, inInclusiveRange(1, 3));
+      expect(next, inInclusiveRange(1, 3));
 
       current = next;
       next = pool.next();
       expect(current, second);
-      expect(next, inInclusiveRange(1, 5));
+      expect(next, inInclusiveRange(1, 3));
     });
 
     test('restart clears danger timers and score via helpers', () {
