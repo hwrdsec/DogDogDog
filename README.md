@@ -33,8 +33,8 @@ That resolves the workspace (host + game package) with a single lockfile at the 
 ## How to play
 
 1. Drag horizontally to aim the ghost dog at the top, then release to drop.
-2. Matching levels merge into the next tier and add to your score.
-3. Only lower levels appear as drops; higher dogs come from merges.
+2. Matching levels merge into the next tier and add to your score. Two top-tier dogs clear for a larger bonus instead of creating another dog.
+3. Drops are only levels 1–3; higher dogs come from merges.
 4. Keep the pile below the red danger line — linger too long and it is game over.
 5. Use pause / resume in the HUD, or Restart after a game over.
 

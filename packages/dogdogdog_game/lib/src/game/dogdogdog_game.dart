@@ -44,6 +44,7 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
     mergeRules = MergeRules(
       maxLevel: this.config.maxDogLevel,
       catalog: this.dogCatalog,
+      maxLevelClearScore: this.config.maxLevelClearScore,
     );
     spawnPool = SpawnPool(
       minLevel: this.config.minDropLevel,
@@ -358,9 +359,15 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
         continue;
       }
 
-      final next = mergeRules.definitionFor(outcome.resultingLevel);
-      if (next == null) {
-        continue;
+      final resultingLevel = outcome.resultingLevel;
+      final DogDefinition? next;
+      if (resultingLevel == null) {
+        next = null;
+      } else {
+        next = mergeRules.definitionFor(resultingLevel);
+        if (next == null) {
+          continue;
+        }
       }
 
       a.isMerging = true;
@@ -368,7 +375,9 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
       a.removeFromParent();
       b.removeFromParent();
 
-      _spawnDog(next, Vector2(outcome.spawnX, outcome.spawnY));
+      if (next != null) {
+        _spawnDog(next, Vector2(outcome.spawnX, outcome.spawnY));
+      }
       scoreDelta += outcome.scoreAwarded;
     }
 

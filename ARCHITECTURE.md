@@ -92,7 +92,7 @@ The game package owns walls (left, right, floor), tap/click drop for placeholder
 
 ## Milestone 3 merge mechanic
 
-Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `MergeRules.resolve` picks a conflict-free set (each body at most once) and the game removes both dogs, spawns the next level at the contact point, and awards that dog’s `scoreValue` via `onScoreChanged`. Max level cannot merge. New dogs can immediately chain-merge on later physics steps.
+Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `MergeRules.resolve` picks a conflict-free set (each body at most once). Below the max level the game removes both dogs, spawns the next level at the contact point, and awards that dog’s `scoreValue` via `onScoreChanged`. Two max-level dogs are removed with no spawn and award a clear bonus (`GameConfig.maxLevelClearScore`, default `scoreValue * 2 + 1` of the max dog — higher than merging into that dog). Each body is cleared at most once per resolve pass. New dogs can immediately chain-merge on later physics steps.
 
 ## Milestone 4 gameplay loop
 
@@ -103,11 +103,13 @@ Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `M
 
 ## Milestone 5 dog content
 
-Eleven data-driven `DogDefinition` tiers in `placeholderDogs` (emoji, color,
-score, radius, optional `spriteAsset`). Spawn pool stays on lower tiers
-(`minDropLevel`…`maxDropLevel`); higher dogs come from merges only. Package
-folder `assets/dogs/` holds replaceable sprites (`dog_01.png`…`dog_11.png`);
-until files exist, balls / HUD render color + emoji + level number.
+Eight data-driven `DogDefinition` tiers in `placeholderDogs` (emoji, color,
+score, radius, optional `spriteAsset`). Radii run from 0.48 at tier 1 to
+1.54 at tier 8 (the previous top-dog size) on the fixed 10×16 playfield.
+Spawn pool is levels 1–3 (`minDropLevel`…`maxDropLevel`); higher dogs come
+from merges only. Package folder `assets/dogs/` holds replaceable sprites
+(`dog_01.png`…`dog_08.png`); until files exist, balls / HUD render color +
+emoji + level number.
 
 ## What later milestones still skip
 
