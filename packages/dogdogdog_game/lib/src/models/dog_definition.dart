@@ -72,8 +72,7 @@ String dogSpriteAssetForLevel(int level) {
 
 /// Placeholder merge catalog — scores grow with level.
 ///
-/// Eight tiers. Radii are the current playtest sizes. Tier 7 was left at
-/// 1.30, so it is smaller than tiers 5 and 6. Drops use levels 1–3
+/// Eight tiers. Radii are the current playtest sizes. Drops use levels 1–3
 /// (`GameConfig.maxDropLevel`); higher dogs appear only via merges. Two
 /// tier-8 dogs clear instead of spawning another tier.
 const List<DogDefinition> placeholderDogs = [
@@ -134,7 +133,7 @@ const List<DogDefinition> placeholderDogs = [
   DogDefinition(
     level: 7,
     name: 'Rex',
-    radius: 1.30,
+    radius: 2.392,
     color: Color(0xFF03A9F4),
     scoreValue: 127,
     emoji: '🐺',

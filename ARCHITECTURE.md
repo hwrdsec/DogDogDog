@@ -115,10 +115,10 @@ playtest radii:
 | 4 | 1.027 |
 | 5 | 1.488 |
 | 6 | 1.87 |
-| 7 | 1.30 |
+| 7 | 2.392 |
 | 8 | 3.08 |
 
-Tier 7 is unchanged from the previous pass, so it is smaller than tiers 5 and 6. The largest diameter (6.16) still fits the width of 10. Spawn X is clamped by `worldWidth / 2 - radius`, spawn Y is `top + spawnTopOffset + radius`, and the danger check uses the top of the circle (`centerY - radius`). Placeholder circles, emoji, and level digits scale with diameter. Spawn pool is levels 1–3 (`minDropLevel`…`maxDropLevel`); higher dogs come from merges only. Package folder `assets/dogs/` holds replaceable sprites (`dog_01.png`…`dog_08.png`); until files exist, balls / HUD render color + emoji + level number.
+Tier 7 is 1.30 × 1.84. The largest diameter (6.16) still fits the width of 10. Spawn X is clamped by `worldWidth / 2 - radius`, spawn Y is `top + spawnTopOffset + radius`, and the danger check uses the top of the circle (`centerY - radius`). Placeholder circles, emoji, and level digits scale with diameter. Spawn pool is levels 1–3 (`minDropLevel`…`maxDropLevel`); higher dogs come from merges only. Package folder `assets/dogs/` holds replaceable sprites (`dog_01.png`…`dog_08.png`); until files exist, balls / HUD render color + emoji + level number.
 
 ## What later milestones still skip
 
