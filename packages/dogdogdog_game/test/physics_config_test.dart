@@ -6,8 +6,8 @@ void main() {
     test('defaults expose a fixed playfield width, height, and gravity', () {
       const config = PhysicsConfig.defaults;
 
-      expect(config.worldWidth, 10.0);
-      expect(config.visibleWorldHeight, 16.0);
+      expect(config.worldWidth, 2.2 * 6.16);
+      expect(config.visibleWorldHeight, 2.2 * 6.16 * 16 / 10);
       expect(config.playAspectRatio, closeTo(10.0 / 16.0, 1e-9));
       expect(config.gravityY, 40.0);
       expect(config.timeStep, closeTo(1 / 60, 1e-9));
@@ -30,6 +30,16 @@ void main() {
       const config = PhysicsConfig.defaults;
       expect(config.visibleWorldHeight, greaterThan(config.worldWidth));
       expect(config.playAspectRatio, lessThan(1));
+    });
+
+    test('width is the 2.2 level-8 diameter cap', () {
+      const config = PhysicsConfig.defaults;
+      final level8Diameter = placeholderDogs.last.radius * 2;
+
+      expect(placeholderDogs.last.radius, 3.08);
+      expect(level8Diameter, 6.16);
+      expect(config.worldWidth, lessThanOrEqualTo(2.2 * level8Diameter + 1e-9));
+      expect(config.worldWidth, closeTo(2.2 * level8Diameter, 1e-9));
     });
   });
 
