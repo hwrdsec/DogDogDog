@@ -40,12 +40,12 @@ void main() {
         expect(placeholderDogs, hasLength(8));
         expect(placeholderDogs.first.level, 1);
         expect(placeholderDogs.first.name, 'Puppy');
-        expect(placeholderDogs.first.radius, 0.48);
+        expect(placeholderDogs.first.radius, 0.24);
         expect(placeholderDogs.first.emoji, isNotEmpty);
         expect(placeholderDogs.first.spriteAsset, 'assets/dogs/dog_01.png');
         expect(placeholderDogs.last.level, 8);
         expect(placeholderDogs.last.name, 'Duke');
-        expect(placeholderDogs.last.radius, 1.54);
+        expect(placeholderDogs.last.radius, 3.08);
         expect(placeholderDogs.last.spriteAsset, 'assets/dogs/dog_08.png');
         expect(maxCatalogLevel(), GameConfig.defaults.maxDogLevel);
         expect(
@@ -61,14 +61,39 @@ void main() {
       },
     );
 
-    test('radii grow monotonically with level', () {
-      for (var i = 1; i < placeholderDogs.length; i++) {
-        expect(
-          placeholderDogs[i].radius,
-          greaterThan(placeholderDogs[i - 1].radius),
-        );
-      }
+    test('playtest radii match the size pass', () {
+      expect(placeholderDogs.map((dog) => dog.radius).toList(), const [
+        0.24,
+        0.57,
+        0.7772,
+        1.027,
+        1.488,
+        1.87,
+        1.30,
+        3.08,
+      ]);
     });
+
+    test(
+      'every dog fits between the walls and rests below the danger line',
+      () {
+        const physics = PhysicsConfig.defaults;
+        const config = GameConfig.defaults;
+        final halfWidth = physics.worldWidth / 2;
+
+        for (final dog in placeholderDogs) {
+          expect(dog.radius, lessThan(halfWidth));
+          expect(
+            physics.spawnTopOffset + dog.radius * 2,
+            lessThan(physics.visibleWorldHeight),
+          );
+          expect(
+            physics.visibleWorldHeight - dog.radius * 2,
+            greaterThan(config.dangerLineOffset),
+          );
+        }
+      },
+    );
   });
 
   group('GameConfig', () {

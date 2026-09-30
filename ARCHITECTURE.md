@@ -104,12 +104,21 @@ Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `M
 ## Milestone 5 dog content
 
 Eight data-driven `DogDefinition` tiers in `placeholderDogs` (emoji, color,
-score, radius, optional `spriteAsset`). Radii run from 0.48 at tier 1 to
-1.54 at tier 8 (the previous top-dog size) on the fixed 10×16 playfield.
-Spawn pool is levels 1–3 (`minDropLevel`…`maxDropLevel`); higher dogs come
-from merges only. Package folder `assets/dogs/` holds replaceable sprites
-(`dog_01.png`…`dog_08.png`); until files exist, balls / HUD render color +
-emoji + level number.
+score, radius, optional `spriteAsset`). The playfield stays 10×16. Current
+playtest radii:
+
+| Level | Radius |
+| --- | --- |
+| 1 | 0.24 |
+| 2 | 0.57 |
+| 3 | 0.7772 |
+| 4 | 1.027 |
+| 5 | 1.488 |
+| 6 | 1.87 |
+| 7 | 1.30 |
+| 8 | 3.08 |
+
+Tier 7 is unchanged from the previous pass, so it is smaller than tiers 5 and 6. The largest diameter (6.16) still fits the width of 10. Spawn X is clamped by `worldWidth / 2 - radius`, spawn Y is `top + spawnTopOffset + radius`, and the danger check uses the top of the circle (`centerY - radius`). Placeholder circles, emoji, and level digits scale with diameter. Spawn pool is levels 1–3 (`minDropLevel`…`maxDropLevel`); higher dogs come from merges only. Package folder `assets/dogs/` holds replaceable sprites (`dog_01.png`…`dog_08.png`); until files exist, balls / HUD render color + emoji + level number.
 
 ## What later milestones still skip
 
