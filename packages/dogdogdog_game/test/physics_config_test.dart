@@ -6,8 +6,8 @@ void main() {
     test('defaults expose a fixed playfield width, height, and gravity', () {
       const config = PhysicsConfig.defaults;
 
-      expect(config.worldWidth, 2.2 * 6.16);
-      expect(config.visibleWorldHeight, 2.2 * 6.16 * 16 / 10);
+      expect(config.worldWidth, 10.0);
+      expect(config.visibleWorldHeight, 16.0);
       expect(config.playAspectRatio, closeTo(10.0 / 16.0, 1e-9));
       expect(config.gravityY, 40.0);
       expect(config.timeStep, closeTo(1 / 60, 1e-9));
@@ -32,14 +32,16 @@ void main() {
       expect(config.playAspectRatio, lessThan(1));
     });
 
-    test('width is the 2.2 level-8 diameter cap', () {
+    test('two level-8 dogs do not fit side by side', () {
       const config = PhysicsConfig.defaults;
       final level8Diameter = placeholderDogs.last.radius * 2;
+      final pairWidth = 2 * level8Diameter;
 
       expect(placeholderDogs.last.radius, 3.08);
       expect(level8Diameter, 6.16);
-      expect(config.worldWidth, lessThanOrEqualTo(2.2 * level8Diameter + 1e-9));
-      expect(config.worldWidth, closeTo(2.2 * level8Diameter, 1e-9));
+      expect(pairWidth, greaterThan(config.worldWidth));
+      // Short by more than one world unit, not a hairline overlap.
+      expect(pairWidth - config.worldWidth, greaterThan(1));
     });
   });
 

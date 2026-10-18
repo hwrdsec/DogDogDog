@@ -2,8 +2,8 @@
 class PhysicsConfig {
   const PhysicsConfig({
     this.gravityY = 40.0,
-    this.worldWidth = 2.2 * 6.16,
-    this.visibleWorldHeight = 2.2 * 6.16 * 16 / 10,
+    this.worldWidth = 10.0,
+    this.visibleWorldHeight = 16.0,
     this.timeStep = 1 / 60,
     this.velocityIterations = 8,
     this.positionIterations = 3,
@@ -23,12 +23,13 @@ class PhysicsConfig {
 
   /// Fixed horizontal extent of the playable world (world units).
   ///
-  /// Capped at 2.2 × the level-8 diameter (6.16), so the bucket is 13.552 wide.
+  /// 10 is clearly under two level-8 diameters (12.32), so top dogs overlap
+  /// instead of resting side by side. One still has room to slide.
   final double worldWidth;
 
   /// Fixed vertical extent of the playable world (world units).
   ///
-  /// Paired with [worldWidth] at the previous 10:16 portrait ratio. The camera
+  /// Paired with [worldWidth] as a 10×16 portrait bucket. The camera
   /// letterboxes (pillarboxes) on wider windows so gameplay proportions stay
   /// the same across phones, tablets, and desktop.
   final double visibleWorldHeight;
