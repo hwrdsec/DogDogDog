@@ -211,7 +211,7 @@ void main() {
     test('finds catalog entries by level', () {
       expect(dogAtLevel(1)?.name, 'Puppy');
       expect(dogAtLevel(8)?.name, 'Duke');
-      expect(dogAtLevel(8)?.radius, 1.54);
+      expect(dogAtLevel(8)?.radius, 3.08);
       expect(dogAtLevel(11), isNull);
       expect(dogAtLevel(99), isNull);
     });

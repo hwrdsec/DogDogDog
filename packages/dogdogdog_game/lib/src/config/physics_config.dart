@@ -22,11 +22,14 @@ class PhysicsConfig {
   final double gravityY;
 
   /// Fixed horizontal extent of the playable world (world units).
+  ///
+  /// 10 is clearly under two level-8 diameters (12.32), so top dogs overlap
+  /// instead of resting side by side. One still has room to slide.
   final double worldWidth;
 
   /// Fixed vertical extent of the playable world (world units).
   ///
-  /// Paired with [worldWidth] this defines a portrait playfield. The camera
+  /// Paired with [worldWidth] as a 10×16 portrait bucket. The camera
   /// letterboxes (pillarboxes) on wider windows so gameplay proportions stay
   /// the same across phones, tablets, and desktop.
   final double visibleWorldHeight;

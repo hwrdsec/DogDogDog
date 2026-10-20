@@ -70,17 +70,16 @@ String dogSpriteAssetForLevel(int level) {
   return 'assets/dogs/dog_$padded.png';
 }
 
-/// Placeholder merge catalog — radii and scores grow with level.
+/// Placeholder merge catalog — scores grow with level.
 ///
-/// Eight tiers. Radii are geometrically interpolated from a larger tier 1
-/// (0.48) up to the previous top-dog size on tier 8 (1.54). Drops use
-/// levels 1–3 (`GameConfig.maxDropLevel`); higher dogs appear only via
-/// merges. Two tier-8 dogs clear instead of spawning another tier.
+/// Eight tiers. Radii are the current playtest sizes. Drops use levels 1–3
+/// (`GameConfig.maxDropLevel`); higher dogs appear only via merges. Two
+/// tier-8 dogs clear instead of spawning another tier.
 const List<DogDefinition> placeholderDogs = [
   DogDefinition(
     level: 1,
     name: 'Puppy',
-    radius: 0.48,
+    radius: 0.24,
     color: Color(0xFFFFC107),
     scoreValue: 1,
     emoji: '🐾',
@@ -98,7 +97,7 @@ const List<DogDefinition> placeholderDogs = [
   DogDefinition(
     level: 3,
     name: 'Buddy',
-    radius: 0.67,
+    radius: 0.7772,
     color: Color(0xFFFF5722),
     scoreValue: 7,
     emoji: '🐶',
@@ -107,7 +106,7 @@ const List<DogDefinition> placeholderDogs = [
   DogDefinition(
     level: 4,
     name: 'Rover',
-    radius: 0.79,
+    radius: 1.027,
     color: Color(0xFFE91E63),
     scoreValue: 15,
     emoji: '🐕',
@@ -116,7 +115,7 @@ const List<DogDefinition> placeholderDogs = [
   DogDefinition(
     level: 5,
     name: 'Scout',
-    radius: 0.93,
+    radius: 1.488,
     color: Color(0xFF9C27B0),
     scoreValue: 31,
     emoji: '🦮',
@@ -125,7 +124,7 @@ const List<DogDefinition> placeholderDogs = [
   DogDefinition(
     level: 6,
     name: 'Bruno',
-    radius: 1.10,
+    radius: 1.87,
     color: Color(0xFF3F51B5),
     scoreValue: 63,
     emoji: '🐕‍🦺',
@@ -134,7 +133,7 @@ const List<DogDefinition> placeholderDogs = [
   DogDefinition(
     level: 7,
     name: 'Rex',
-    radius: 1.30,
+    radius: 2.392,
     color: Color(0xFF03A9F4),
     scoreValue: 127,
     emoji: '🐺',
@@ -143,7 +142,7 @@ const List<DogDefinition> placeholderDogs = [
   DogDefinition(
     level: 8,
     name: 'Duke',
-    radius: 1.54,
+    radius: 3.08,
     color: Color(0xFF009688),
     scoreValue: 255,
     emoji: '🦊',
