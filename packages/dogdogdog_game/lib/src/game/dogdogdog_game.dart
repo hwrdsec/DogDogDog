@@ -1,17 +1,19 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flame/camera.dart';
 import 'package:flame/events.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../components/aim_preview.dart';
 import '../components/danger_line.dart';
 import '../components/sandbox_ball.dart';
 import '../components/wall.dart';
 import '../config/game_config.dart';
+import '../config/physics_tuning.dart';
+import '../logic/circle_packing.dart';
 import '../logic/danger_monitor.dart';
 import '../logic/merge_rules.dart';
 import '../logic/spawn_pool.dart';
@@ -19,6 +21,7 @@ import '../models/dog_definition.dart';
 import '../overlays/overlay_ids.dart';
 import '../persistence/high_score_repository.dart';
 import '../persistence/local_high_score_repository.dart';
+import '../persistence/physics_tuning_store.dart';
 
 /// Core DogDogDog Flame / Forge2D game.
 ///
@@ -34,10 +37,13 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
     this.onGameStarted,
     this.onGameOver,
     this.onHighScoreChanged,
+    PhysicsTuningStore? physicsTuningStore,
   }) : config = config ?? GameConfig.defaults,
        highScoreRepository = highScoreRepository ?? LocalHighScoreRepository(),
+       physicsTuningStore = physicsTuningStore ?? PhysicsTuningStore(),
        dogCatalog = List.unmodifiable(dogCatalog ?? placeholderDogs),
        _random = random ?? (seed != null ? Random(seed) : Random()),
+       tuning = PhysicsTuning(initial: (config ?? GameConfig.defaults).physics),
        super(
          gravity: Vector2(0, (config ?? GameConfig.defaults).physics.gravityY),
        ) {
@@ -58,8 +64,10 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
 
   final GameConfig config;
   final HighScoreRepository highScoreRepository;
+  final PhysicsTuningStore physicsTuningStore;
   final List<DogDefinition> dogCatalog;
   final Random _random;
+  final PhysicsTuning tuning;
 
   late final MergeRules mergeRules;
   late final SpawnPool spawnPool;
@@ -109,6 +117,12 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    if (!kReleaseMode) {
+      await physicsTuningStore.restore(tuning);
+      HardwareKeyboard.instance.addHandler(_onTuneKey);
+      tuning.addListener(_onTuningChanged);
+    }
+    _applyTuning();
     final loaded = await highScoreRepository.getHighScore();
     highScoreListenable.value = loaded;
     onHighScoreChanged?.call(loaded);
@@ -117,6 +131,82 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
     _rebuildDangerLine();
     overlays.add(DogDogDogOverlays.hud);
     startGame();
+  }
+
+  @override
+  void onRemove() {
+    if (!kReleaseMode) {
+      HardwareKeyboard.instance.removeHandler(_onTuneKey);
+      tuning.removeListener(_onTuningChanged);
+    }
+    super.onRemove();
+  }
+
+  /// Long-press the score, or press Shift+P, to open this in debug/profile.
+  void togglePhysicsTuning() {
+    if (kReleaseMode) {
+      return;
+    }
+    if (overlays.isActive(DogDogDogOverlays.physicsTuning)) {
+      overlays.remove(DogDogDogOverlays.physicsTuning);
+    } else {
+      overlays.add(DogDogDogOverlays.physicsTuning);
+    }
+  }
+
+  void resetPhysicsTuning() {
+    _ignoreTuningSave = true;
+    tuning.reset();
+    _ignoreTuningSave = false;
+    _applyTuning();
+    if (!kReleaseMode) {
+      physicsTuningStore.clear();
+    }
+  }
+
+  bool _onTuneKey(KeyEvent event) {
+    if (kReleaseMode || event is! KeyDownEvent) {
+      return false;
+    }
+    final shift = HardwareKeyboard.instance.isShiftPressed;
+    if (shift && event.logicalKey == LogicalKeyboardKey.keyP) {
+      togglePhysicsTuning();
+      return true;
+    }
+    return false;
+  }
+
+  void _onTuningChanged() {
+    _applyTuning();
+    if (_ignoreTuningSave || kReleaseMode) {
+      return;
+    }
+    physicsTuningStore.save(tuning);
+  }
+
+  bool _ignoreTuningSave = false;
+
+  void _applyTuning() {
+    world.gravity = Vector2(0, tuning.gravityY);
+    world.subStepCount = tuning.subStepCount;
+    for (final child in world.children) {
+      if (child is SandboxBall && child.isLoaded && child.body.isValid) {
+        child.body.linearDamping = tuning.linearDamping;
+        child.body.angularDamping = tuning.angularDamping;
+        final density = tuning.densityForLevel(child.level);
+        for (final shape in child.body.shapes) {
+          shape.friction = tuning.friction;
+          shape.restitution = tuning.restitution;
+          shape.density = density;
+        }
+        child.body.isAwake = true;
+      } else if (child is Wall && child.isLoaded && child.body.isValid) {
+        for (final shape in child.body.shapes) {
+          shape.friction = tuning.wallFriction;
+          shape.restitution = tuning.wallRestitution;
+        }
+      }
+    }
   }
 
   @override
@@ -138,6 +228,7 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
       return;
     }
     _processMerges();
+    _resolveOverlaps();
     _checkDanger(dt);
     _syncAimPreview();
   }
@@ -407,15 +498,94 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
     Vector2 position, {
     bool isDropping = false,
   }) {
+    final spot = _clearedSpawn(definition, position);
     world.add(
       SandboxBall(
-        position: position,
+        position: spot,
         definition: definition,
         physics: config.physics,
+        tuning: tuning,
         onMergeContact: _onMergeContact,
         isDropping: isDropping,
       ),
     );
+  }
+
+  /// Moves dogs that the physics step left inside each other or the walls.
+  ///
+  /// A level 7 and a level 8 cannot sit side by side in this bucket. Box2D
+  /// pushes that pair along the line between their centers, the walls block
+  /// the push, and both dogs fall asleep still overlapping. The packing pass
+  /// turns the blocked sideways motion into an upward one.
+  void _resolveOverlaps() {
+    final dogs = _loadedDogs();
+    if (dogs.isEmpty) {
+      return;
+    }
+    final packed = [for (final dog in dogs) _packedFrom(dog)];
+    _separateAndApply(dogs, packed);
+  }
+
+  Vector2 _clearedSpawn(DogDefinition definition, Vector2 desired) {
+    final dogs = _loadedDogs();
+    if (dogs.isEmpty) {
+      return desired;
+    }
+    final packed = [
+      for (final dog in dogs) _packedFrom(dog),
+      PackedCircle(x: desired.x, y: desired.y, radius: definition.radius),
+    ];
+    _separateAndApply(dogs, packed);
+    return Vector2(packed.last.x, packed.last.y);
+  }
+
+  List<SandboxBall> _loadedDogs() {
+    final dogs = <SandboxBall>[];
+    for (final child in world.children) {
+      if (child is! SandboxBall || !child.isLoaded || child.isRemoving) {
+        continue;
+      }
+      if (!child.body.isValid) {
+        continue;
+      }
+      dogs.add(child);
+    }
+    return dogs;
+  }
+
+  PackedCircle _packedFrom(SandboxBall dog) {
+    final mass = dog.body.mass;
+    return PackedCircle(
+      x: dog.body.position.x,
+      y: dog.body.position.y,
+      radius: dog.radius,
+      inverseMass: mass == 0 ? 0 : 1 / mass,
+    );
+  }
+
+  void _separateAndApply(List<SandboxBall> dogs, List<PackedCircle> packed) {
+    final rect = camera.visibleWorldRect;
+    separatePackedCircles(
+      packed,
+      left: rect.left,
+      right: rect.right,
+      floor: rect.bottom,
+      iterations: tuning.overlapIterations,
+    );
+    for (var i = 0; i < dogs.length; i++) {
+      final dog = dogs[i];
+      final pose = packed[i];
+      final position = dog.body.position;
+      if ((position.x - pose.x).abs() < 1e-4 &&
+          (position.y - pose.y).abs() < 1e-4) {
+        continue;
+      }
+      dog.body.setTransform(
+        Vector2(pose.x, pose.y),
+        Rot.fromAngle(dog.body.angle),
+      );
+      dog.body.isAwake = true;
+    }
   }
 
   void _clearDogs() {
@@ -456,12 +626,26 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
     final topRight = rect.topRight.toVector2();
     final bottomLeft = rect.bottomLeft.toVector2();
     final bottomRight = rect.bottomRight.toVector2();
-    final physics = config.physics;
 
     final walls = [
-      Wall(start: topLeft, end: bottomLeft, physics: physics),
-      Wall(start: topRight, end: bottomRight, physics: physics),
-      Wall(start: bottomLeft, end: bottomRight, physics: physics),
+      Wall(
+        start: topLeft,
+        end: bottomLeft,
+        friction: tuning.wallFriction,
+        restitution: tuning.wallRestitution,
+      ),
+      Wall(
+        start: topRight,
+        end: bottomRight,
+        friction: tuning.wallFriction,
+        restitution: tuning.wallRestitution,
+      ),
+      Wall(
+        start: bottomLeft,
+        end: bottomRight,
+        friction: tuning.wallFriction,
+        restitution: tuning.wallRestitution,
+      ),
     ];
 
     _walls.addAll(walls);

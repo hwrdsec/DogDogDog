@@ -67,6 +67,8 @@ GameWidget(
 
 The game package owns the overlay widgets and names (`hud`, `gameOver`). Parents can replace builders if they need a custom shell.
 
+Debug and profile builds can open a physics tuning panel by long-pressing the score, or with Shift+P on a keyboard. Release builds do not include the panel. Slider values are kept in `shared_preferences` until reset.
+
 ## Persistence
 
 High scores go through `HighScoreRepository` so the standalone app and any future embed can swap storage:
@@ -92,7 +94,7 @@ The game package owns walls (left, right, floor), tap/click drop for placeholder
 
 ## Milestone 3 merge mechanic
 
-Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `MergeRules.resolve` picks a conflict-free set (each body at most once). Below the max level the game removes both dogs, spawns the next level at the contact point, and awards that dog’s `scoreValue` via `onScoreChanged`. Two max-level dogs are removed with no spawn and award a clear bonus (`GameConfig.maxLevelClearScore`, default `scoreValue * 2 + 1` of the max dog — higher than merging into that dog). Each body is cleared at most once per resolve pass. New dogs can immediately chain-merge on later physics steps.
+Bodies carry a level from `DogDefinition`. Same-level contacts queue a merge; `MergeRules.resolve` picks a conflict-free set (each body at most once). Below the max level the game removes both dogs, spawns the next level at the contact point, and awards that dog’s `scoreValue` via `onScoreChanged`. Two max-level dogs are removed with no spawn and award a clear bonus (`GameConfig.maxLevelClearScore`, default `scoreValue * 2 + 1` of the max dog — higher than merging into that dog). Each body is cleared at most once per resolve pass. After the physics step, circles that the bucket cannot hold side by side are separated again, with the extra overlap taken upward so one dog sits on the other instead of sinking in. New dogs can immediately chain-merge on later physics steps.
 
 ## Milestone 4 gameplay loop
 

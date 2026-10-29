@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../game/dogdogdog_game.dart';
@@ -33,31 +34,7 @@ class HudOverlay extends StatelessWidget {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Score ${game.scoreListenable.value}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Best ${game.highScoreListenable.value}',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Expanded(child: _ScoreBlock(game: game)),
                 _NextDogBadge(definition: next),
                 const SizedBox(width: 8),
                 IconButton(
@@ -79,6 +56,47 @@ class HudOverlay extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _ScoreBlock extends StatelessWidget {
+  const _ScoreBlock({required this.game});
+
+  final DogDogDogGame game;
+
+  @override
+  Widget build(BuildContext context) {
+    final column = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Score ${game.scoreListenable.value}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Best ${game.highScoreListenable.value}',
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+    if (kReleaseMode) {
+      return column;
+    }
+    return GestureDetector(
+      onLongPress: game.togglePhysicsTuning,
+      behavior: HitTestBehavior.opaque,
+      child: column,
     );
   }
 }
