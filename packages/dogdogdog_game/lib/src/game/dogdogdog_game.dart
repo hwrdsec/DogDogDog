@@ -12,6 +12,7 @@ import '../components/danger_line.dart';
 import '../components/sandbox_ball.dart';
 import '../components/wall.dart';
 import '../config/game_config.dart';
+import '../logic/circle_packing.dart';
 import '../logic/danger_monitor.dart';
 import '../logic/merge_rules.dart';
 import '../logic/spawn_pool.dart';
@@ -138,6 +139,7 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
       return;
     }
     _processMerges();
+    _resolveOverlaps();
     _checkDanger(dt);
     _syncAimPreview();
   }
@@ -407,15 +409,92 @@ class DogDogDogGame extends Forge2DGame with MultiTouchDragDetector {
     Vector2 position, {
     bool isDropping = false,
   }) {
+    final spot = _clearedSpawn(definition, position);
     world.add(
       SandboxBall(
-        position: position,
+        position: spot,
         definition: definition,
         physics: config.physics,
         onMergeContact: _onMergeContact,
         isDropping: isDropping,
       ),
     );
+  }
+
+  /// Moves dogs that the physics step left inside each other or the walls.
+  ///
+  /// A level 7 and a level 8 cannot sit side by side in this bucket. Box2D
+  /// pushes that pair along the line between their centers, the walls block
+  /// the push, and both dogs fall asleep still overlapping. The packing pass
+  /// turns the blocked sideways motion into an upward one.
+  void _resolveOverlaps() {
+    final dogs = _loadedDogs();
+    if (dogs.isEmpty) {
+      return;
+    }
+    final packed = [for (final dog in dogs) _packedFrom(dog)];
+    _separateAndApply(dogs, packed);
+  }
+
+  Vector2 _clearedSpawn(DogDefinition definition, Vector2 desired) {
+    final dogs = _loadedDogs();
+    if (dogs.isEmpty) {
+      return desired;
+    }
+    final packed = [
+      for (final dog in dogs) _packedFrom(dog),
+      PackedCircle(x: desired.x, y: desired.y, radius: definition.radius),
+    ];
+    _separateAndApply(dogs, packed);
+    return Vector2(packed.last.x, packed.last.y);
+  }
+
+  List<SandboxBall> _loadedDogs() {
+    final dogs = <SandboxBall>[];
+    for (final child in world.children) {
+      if (child is! SandboxBall || !child.isLoaded || child.isRemoving) {
+        continue;
+      }
+      if (!child.body.isValid) {
+        continue;
+      }
+      dogs.add(child);
+    }
+    return dogs;
+  }
+
+  PackedCircle _packedFrom(SandboxBall dog) {
+    final mass = dog.body.mass;
+    return PackedCircle(
+      x: dog.body.position.x,
+      y: dog.body.position.y,
+      radius: dog.radius,
+      inverseMass: mass == 0 ? 0 : 1 / mass,
+    );
+  }
+
+  void _separateAndApply(List<SandboxBall> dogs, List<PackedCircle> packed) {
+    final rect = camera.visibleWorldRect;
+    separatePackedCircles(
+      packed,
+      left: rect.left,
+      right: rect.right,
+      floor: rect.bottom,
+    );
+    for (var i = 0; i < dogs.length; i++) {
+      final dog = dogs[i];
+      final pose = packed[i];
+      final position = dog.body.position;
+      if ((position.x - pose.x).abs() < 1e-4 &&
+          (position.y - pose.y).abs() < 1e-4) {
+        continue;
+      }
+      dog.body.setTransform(
+        Vector2(pose.x, pose.y),
+        Rot.fromAngle(dog.body.angle),
+      );
+      dog.body.isAwake = true;
+    }
   }
 
   void _clearDogs() {

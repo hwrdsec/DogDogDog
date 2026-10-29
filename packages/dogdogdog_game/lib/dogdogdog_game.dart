@@ -8,6 +8,7 @@ export 'src/components/wall.dart';
 export 'src/config/game_config.dart';
 export 'src/config/physics_config.dart';
 export 'src/game/dogdogdog_game.dart';
+export 'src/logic/circle_packing.dart';
 export 'src/logic/danger_monitor.dart';
 export 'src/logic/merge_rules.dart';
 export 'src/logic/spawn_pool.dart';

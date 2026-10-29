@@ -23,8 +23,8 @@ class PhysicsConfig {
 
   /// Fixed horizontal extent of the playable world (world units).
   ///
-  /// 10 is clearly under two level-8 diameters (12.32), so top dogs overlap
-  /// instead of resting side by side. One still has room to slide.
+  /// 10 is clearly under two level-8 diameters (12.32), so two top dogs cannot
+  /// rest side by side. One still has room to slide.
   final double worldWidth;
 
   /// Fixed vertical extent of the playable world (world units).
