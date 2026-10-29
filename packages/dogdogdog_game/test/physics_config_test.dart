@@ -9,20 +9,27 @@ void main() {
       expect(config.worldWidth, 10.0);
       expect(config.visibleWorldHeight, 16.0);
       expect(config.playAspectRatio, closeTo(10.0 / 16.0, 1e-9));
-      expect(config.gravityY, 40.0);
+      expect(config.gravityY, 48);
       expect(config.timeStep, closeTo(1 / 60, 1e-9));
-      expect(config.velocityIterations, 8);
-      expect(config.positionIterations, 3);
+      expect(config.subStepCount, 6);
+      expect(config.overlapIterations, 12);
     });
 
     test('defaults centralize ball and wall material values', () {
       const config = PhysicsConfig.defaults;
 
       expect(config.ballRadius, greaterThan(0));
-      expect(config.ballDensity, greaterThan(0));
-      expect(config.ballRestitution, inInclusiveRange(0, 1));
+      expect(config.ballDensity, 1.2);
+      expect(config.densityFalloff, 2);
+      expect(config.ballRestitution, 0.12);
+      expect(config.ballLinearDamping, 0.35);
+      expect(config.ballAngularDamping, 1.5);
       expect(config.ballFriction, greaterThan(0));
       expect(config.wallFriction, greaterThan(0));
+      expect(config.wallRestitution, lessThan(config.ballRestitution));
+      expect(config.densityForLevel(1), config.ballDensity);
+      expect(config.densityForLevel(8), closeTo(config.ballDensity / 64, 1e-9));
+      expect(config.densityForLevel(8), lessThan(config.densityForLevel(2)));
       expect(config.spawnTopOffset, greaterThan(0));
     });
 

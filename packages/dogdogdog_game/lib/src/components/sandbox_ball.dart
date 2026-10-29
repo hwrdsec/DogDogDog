@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flame_forge2d/flame_forge2d.dart';
 
 import '../config/physics_config.dart';
+import '../config/physics_tuning.dart';
 import '../models/dog_definition.dart';
 import '../rendering/dog_placeholder_paint.dart';
 
@@ -13,6 +14,7 @@ class SandboxBall extends BodyComponent with ContactCallbacks {
     required this.definition,
     required this.onMergeContact,
     PhysicsConfig physics = PhysicsConfig.defaults,
+    PhysicsTuning? tuning,
     this.isDropping = false,
   }) : _spawnPosition = position.clone(),
        _physics = physics,
@@ -22,17 +24,19 @@ class SandboxBall extends BodyComponent with ContactCallbacks {
          bodyDef: BodyDef(
            type: BodyType.dynamic,
            position: position.clone(),
-           angularDamping: physics.ballAngularDamping,
-           linearDamping: physics.ballLinearDamping,
+           angularDamping: tuning?.angularDamping ?? physics.ballAngularDamping,
+           linearDamping: tuning?.linearDamping ?? physics.ballLinearDamping,
          ),
          shapeSpecs: [
            ShapeSpec(
              Circle(radius: definition.radius),
              ShapeDef(
-               density: physics.ballDensity,
+               density:
+                   tuning?.densityForLevel(definition.level) ??
+                   physics.densityForLevel(definition.level),
                material: SurfaceMaterial(
-                 restitution: physics.ballRestitution,
-                 friction: physics.ballFriction,
+                 restitution: tuning?.restitution ?? physics.ballRestitution,
+                 friction: tuning?.friction ?? physics.ballFriction,
                ),
              ),
            ),

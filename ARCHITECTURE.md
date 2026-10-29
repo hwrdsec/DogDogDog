@@ -67,6 +67,8 @@ GameWidget(
 
 The game package owns the overlay widgets and names (`hud`, `gameOver`). Parents can replace builders if they need a custom shell.
 
+Debug and profile builds can open a physics tuning panel by long-pressing the score, or with Shift+P on a keyboard. Release builds do not include the panel. Slider values are kept in `shared_preferences` until reset.
+
 ## Persistence
 
 High scores go through `HighScoreRepository` so the standalone app and any future embed can swap storage:
